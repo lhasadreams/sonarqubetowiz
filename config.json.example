@@ -1,0 +1,14 @@
+{
+    "wiz": {
+        "client_id": "",
+        "client_secret": "",
+        "wiz_url": "",
+        "wiz_api_url": ""
+
+    },
+    "sonarqube": {
+        "sonarqube_url": "http://sonarcloud.io",
+        "auth_key": "",
+        "project_key": ""
+    }
+}
