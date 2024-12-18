@@ -7,6 +7,7 @@ import argparse
 import os
 
 def getconfig (config_file):
+    print(config_file)
     with open(config_file, "r") as file:
         config = json.load(file)
     return config["wiz"]["client_id"], config["wiz"]["client_secret"], config["wiz"]["wiz_api_url"], config["wiz"]["wiz_url"]
@@ -34,7 +35,7 @@ def getbearer (client_id, client_secret, wiz_url):
 
     return(token)
 
-def geturl (token, wiz_api_url):
+def geturl (token, wiz_api_url, upload_file):
     # Set up the URL's
     wiz_graphql_url =  f"{wiz_api_url}/graphql"
 
@@ -58,7 +59,7 @@ def geturl (token, wiz_api_url):
     }
     """
     variables = {
-        "filename": "wiz.json"
+        "filename": upload_file
     }
     
     data = {
@@ -145,23 +146,23 @@ def getargs():
 
     # Add a switch/flag
     parser.add_argument("-c", "--config", type=str, required=True, help="Your json configuration file (required)")
-
+    parser.add_argument("-u", "--upload", type=str, required=True, help="Your json upload file (required)")
     # Parse the arguments
     args = parser.parse_args()
 
     # Access the arguments
     if args.config:
-        return args.config
+        return args.config, args.upload
 
 def main():
     # Read the arguments
-    config_file = getargs()
+    config_file, upload_file = getargs()
     # Get configuration file
     client_id, client_secret, wiz_api_url, wiz_url = getconfig(config_file)
     # Get a bearer token
     token = getbearer(client_id, client_secret, wiz_url)
     # Get an upload URL from Wiz
-    UP_LOAD_URL, SYSTEM_ACTIVITY_ID = geturl(token, wiz_api_url)
+    UP_LOAD_URL, SYSTEM_ACTIVITY_ID = geturl(token, wiz_api_url, upload_file)
     print(f'Upload URL - '+ UP_LOAD_URL)
     # print(f'System Activity ID - '+ SYSTEM_ACTIVITY_ID)
 

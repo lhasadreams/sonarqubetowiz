@@ -98,8 +98,8 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
     return responsejson
 
 # Write the wiz.json file to disk
-def writejsonfile(responsejson):
-    filename = "wiz.json"
+def writejsonfile(responsejson, config_file):
+    filename = "wiz_upload_"+config_file
     with open(filename, 'w') as file:
         json.dump(responsejson, file, indent=4)
 
@@ -140,7 +140,7 @@ def main():
     sonarqube_url, auth_key, project_key, integrationId = getconfig (config_file)
     # Read and convert SonarQube CWE's into Wiz Import format
     responsejson = convert(sonarqube_url, auth_key, project_key, integrationId)
-    writejsonfile(responsejson)
+    writejsonfile(responsejson, config_file)
     
 if __name__ == '__main__':
     main()
