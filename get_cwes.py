@@ -1,15 +1,17 @@
 import requests
 import json
 from datetime import datetime, timezone
+import argparse
+import os
 
 # Read the config.json file
-def getconfig ():
-    with open("config.json", "r") as file:
+def getconfig (config_file):
+    with open(config_file, "r") as file:
         config = json.load(file)
-    return config["sonarqube"]["sonarqube_url"], config["sonarqube"]["auth_key"], config["sonarqube"]["project_key"]
+    return config["sonarqube"]["sonarqube_url"], config["sonarqube"]["auth_key"], config["sonarqube"]["project_key"], config["wiz"]["integrationId"]
 
 # Convert the SonarQube input into a file to uplaod to Wiz
-def convert(sonarqube_url, auth_key, project_key):
+def convert(sonarqube_url, auth_key, project_key, integrationId):
     auth = (auth_key, "")
 
     # Fetch Issues with CWE References
@@ -35,7 +37,8 @@ def convert(sonarqube_url, auth_key, project_key):
         responsejson = {}
 
         # Add the Top Level Integration ID
-        responsejson["integrationId"] = "55c176cc-d155-43a2-98ed-aa56873a1ca1"
+        # responsejson["integrationId"] = "55c176cc-d155-43a2-98ed-aa56873a1ca1"
+        responsejson["integrationId"] = integrationId
 
         # Add the top Level dataSources array to the Wiz Response
         responsejson["dataSources"] = []
@@ -111,12 +114,32 @@ def convert_severity(sonarqube_severity):
     }
     return severity_mapping.get(sonarqube_severity.upper(), "Unknown")
 
+# Parse for the config file to use
+def getargs():
+    # Create the parser
+    parser = argparse.ArgumentParser()
+
+    # Add a switch/flag
+    parser.add_argument("-c", "--config", type=str, required=True, help="Your json configuration file (required)")
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Access the arguments
+    if args.config:
+        return args.config
 
 def main():
+    # Read the arguments
+    config_file = getargs()
+    # Check that the file exists
+    if not os.path.isfile(config_file):
+        print(f"Error: The file '{config_file}' does not exist.")
+        exit(1)
     # Read the config file
-    sonarqube_url, auth_key, project_key = getconfig ()
+    sonarqube_url, auth_key, project_key, integrationId = getconfig (config_file)
     # Read and convert SonarQube CWE's into Wiz Import format
-    responsejson = convert(sonarqube_url, auth_key, project_key)
+    responsejson = convert(sonarqube_url, auth_key, project_key, integrationId)
     writejsonfile(responsejson)
     
 if __name__ == '__main__':

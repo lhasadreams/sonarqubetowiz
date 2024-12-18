@@ -1,13 +1,13 @@
 # Python 3.6+
 # pip(3) install requests
 import requests
-import logging
 import json
 import time
+import argparse
 import os
 
-def getconfig ():
-    with open("config.json", "r") as file:
+def getconfig (config_file):
+    with open(config_file, "r") as file:
         config = json.load(file)
     return config["wiz"]["client_id"], config["wiz"]["client_secret"], config["wiz"]["wiz_api_url"], config["wiz"]["wiz_url"]
 
@@ -138,9 +138,26 @@ def checkActivity (token, systemActivityId, wiz_api_url):
     response = response.json()
     return response
 
+# Parse for the config file to use
+def getargs():
+    # Create the parser
+    parser = argparse.ArgumentParser()
+
+    # Add a switch/flag
+    parser.add_argument("-c", "--config", type=str, required=True, help="Your json configuration file (required)")
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Access the arguments
+    if args.config:
+        return args.config
+
 def main():
+    # Read the arguments
+    config_file = getargs()
     # Get configuration file
-    client_id, client_secret, wiz_api_url, wiz_url = getconfig()
+    client_id, client_secret, wiz_api_url, wiz_url = getconfig(config_file)
     # Get a bearer token
     token = getbearer(client_id, client_secret, wiz_url)
     # Get an upload URL from Wiz

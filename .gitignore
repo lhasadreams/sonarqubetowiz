@@ -161,6 +161,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-wiz.json
+wiz*.json
 config.json
 application_vuln_finding_schema.json
