@@ -2,19 +2,13 @@ import requests
 import json
 from datetime import datetime, timezone
 
-severity_mapping = {
-    "BLOCKER": "Critical",
-    "CRITICAL": "High",
-    "MAJOR": "Medium",
-    "MINOR": "Low",
-    "INFO": "Info"
-}
-
+# Read the config.json file
 def getconfig ():
     with open("config.json", "r") as file:
         config = json.load(file)
     return config["sonarqube"]["sonarqube_url"], config["sonarqube"]["auth_key"], config["sonarqube"]["project_key"]
 
+# Convert the SonarQube input into a file to uplaod to Wiz
 def convert(sonarqube_url, auth_key, project_key):
     auth = (auth_key, "")
 
@@ -31,8 +25,6 @@ def convert(sonarqube_url, auth_key, project_key):
 
     # Get all the issues from SonarQube - does not take into account any pagination required.
     sonarquberesponse = requests.get(issues_url, auth=auth, params=params)
-    # output = sonarquberesponse.json()
-    # print(json.dumps(output, indent=2))
 
     # Do we have any CWE's from SonarQube?
     if sonarquberesponse.status_code == 200:
@@ -55,8 +47,6 @@ def convert(sonarqube_url, auth_key, project_key):
         datasources = {"id": project_key, "analysisDate": now,"assets": []}
         responsejson["dataSources"].append(datasources)
 
-        
-
         # Add the assest and webAppVulnerabilityFindings Array to the Wiz Response
         newasset = {"assetIdentifier": {"cloudPlatform": "GitHub", "providerId":"github.com##lhasadreams/nix-foundation##main"},"webAppVulnerabilityFindings": []}
         responsejson["dataSources"][0]["assets"].append(newasset)
@@ -67,7 +57,6 @@ def convert(sonarqube_url, auth_key, project_key):
             print("No SonarQube issues found.")
         else:
             print(f"Found {len(issues)} vulnerabilities.")
-            # print(json.dumps(issues, indent=2))
 
         # Iterate over the SonarQube Issues, find the CWE's and add them the Wiz Response
         for issue in issues:
@@ -80,8 +69,7 @@ def convert(sonarqube_url, auth_key, project_key):
             rule_response = requests.get(rules_url, auth=auth, params=params2)
             if rule_response.status_code == 200:
                 rule_details = rule_response.json()["rule"]
-                # print(json.dumps(rule_details, indent=2))
-                cwes = rule_details.get("securityStandards")
+                # cwes = rule_details.get("securityStandards")
                 # print(f"Issue: {issue['message']} (CWE: {cwes if cwes else 'N/A'})")
 
                 # Build up the response
@@ -97,11 +85,8 @@ def convert(sonarqube_url, auth_key, project_key):
                 externalFindingLink = "TBD"
                 source = "SonarQube"
                 remediation = issue["message"]
-
                 sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": id ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
                 responsejson["dataSources"][0]["assets"][0]["webAppVulnerabilityFindings"].append(sastfinding)
-                # print(json.dumps(responsejson, indent=2))
-                # exit(0)
             else:
                 print(f"Failed to fetch rule details for {rule_key}")
     else:
@@ -109,13 +94,21 @@ def convert(sonarqube_url, auth_key, project_key):
     
     return responsejson
 
+# Write the wiz.json file to disk
 def writejsonfile(responsejson):
     filename = "wiz.json"
     with open(filename, 'w') as file:
         json.dump(responsejson, file, indent=4)
-    # print(json.dumps(responsejson, indent=2))
 
+# Convert from SonarQube security levels to Wiz ones
 def convert_severity(sonarqube_severity):
+    severity_mapping = {
+        "BLOCKER": "Critical",
+        "CRITICAL": "High",
+        "MAJOR": "Medium",
+        "MINOR": "Low",
+        "INFO": "Info"
+    }
     return severity_mapping.get(sonarqube_severity.upper(), "Unknown")
 
 
