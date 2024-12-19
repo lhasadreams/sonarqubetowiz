@@ -51,7 +51,8 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
         responsejson["dataSources"].append(datasources)
 
         # Add the assest and webAppVulnerabilityFindings Array to the Wiz Response
-        newasset = {"assetIdentifier": {"cloudPlatform": "GitHub", "providerId":"github.com##lhasadreams/nix-foundation##main"},"webAppVulnerabilityFindings": []}
+        project, repo = project_key.split("_", 1)
+        newasset = {"assetIdentifier": {"cloudPlatform": "GitHub", "providerId":"github.com##"+project+"/"+repo+"##main"},"webAppVulnerabilityFindings": []}
         responsejson["dataSources"][0]["assets"].append(newasset)
 
         # Read the SonarQube Issues
