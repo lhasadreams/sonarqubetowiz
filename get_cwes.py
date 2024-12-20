@@ -61,6 +61,8 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
             print("No SonarQube issues found.")
         else:
             print(f"Found {len(issues)} vulnerabilities.")
+            # print(json.dumps(issues, indent=2))
+            # exit(0)
 
         # Iterate over the SonarQube Issues, find the CWE's and add them the Wiz Response
         for issue in issues:
@@ -84,7 +86,7 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
                 name = "CWE-" + rule_details["securityStandards"][0].split(":", 1)[1]
                 # severity = rule_details["severity"]
                 severity = convert_severity(rule_details["severity"])
-                severity = "Critical"
+                severity = "Critical" # Override as anything does not seem to work
                 detailedName = rule_details["name"]
                 externalFindingLink = "TBD"
                 source = "SonarQube"
