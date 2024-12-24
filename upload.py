@@ -74,8 +74,8 @@ def geturl (token, wiz_api_url, upload_file):
 
     return upload_url,systemActivityId
 
-def uploadfiletos3 (url):
-    FILE_PATH  =  os.getcwd()+'/wiz.json'
+def uploadfiletos3 (url, upload_file):
+    FILE_PATH  =  os.getcwd()+'/'+upload_file
     
     with open(FILE_PATH) as object_file:
                 object_text = object_file.read()
@@ -167,7 +167,7 @@ def main():
     # print(f'System Activity ID - '+ SYSTEM_ACTIVITY_ID)
 
     # Upload findings file to Wiz
-    uploadfiletos3(UP_LOAD_URL)
+    uploadfiletos3(UP_LOAD_URL,upload_file )
 
     # Wait for the Upload to complete before checkign for the upload status
     time.sleep(2)

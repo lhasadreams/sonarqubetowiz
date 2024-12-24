@@ -82,11 +82,11 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
                 commitHash = issue["hash"]
                 filename = issue["component"].split(":", 1)[1]
                 linenumbers = str(issue["textRange"]["startLine"]) + "-" + str(issue["textRange"]["endLine"])
-                id = rule_details["key"]
+                id = issue["key"]
                 name = "CWE-" + rule_details["securityStandards"][0].split(":", 1)[1]
                 # severity = rule_details["severity"]
                 severity = convert_severity(rule_details["severity"])
-                severity = "Critical" # Override as anything does not seem to work
+                # severity = "Critical" # Override as anything does not seem to work
                 detailedName = rule_details["name"]
                 externalFindingLink = "TBD"
                 source = "SonarQube"
