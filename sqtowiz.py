@@ -92,8 +92,6 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
             return responsejson, "false"
         else:
             print(f"Found {len(issues)} vulnerabilities.")
-            # print(json.dumps(issues, indent=2))
-            # exit(0)
 
         # Iterate over the SonarQube Issues, find the CWE's and add them the Wiz Response
         for issue in issues:
@@ -106,22 +104,26 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
             rule_response = requests.get(rules_url, auth=auth, params=params2)
             if rule_response.status_code == 200:
                 rule_details = rule_response.json()["rule"]
-                # cwes = rule_details.get("securityStandards")
-                # print(f"Issue: {issue['message']} (CWE: {cwes if cwes else 'N/A'})")
+                # There may ne more than one CWE per SonarQube issue, we need to iterate over them
+                # cwe_standards = []
 
-                # Build up the response
-                commitHash = issue["hash"]
-                filename = issue["component"].split(":", 1)[1]
-                linenumbers = str(issue["textRange"]["startLine"]) + "-" + str(issue["textRange"]["endLine"])
-                id = issue["key"]
-                name = "CWE-" + rule_details["securityStandards"][0].split(":", 1)[1]
-                severity = convert_severity(rule_details["severity"])
-                detailedName = rule_details["name"]
-                externalFindingLink = sonarqube_url+"/project/issues?id="+project_key+"&open="+id
-                source = "SonarQube"
-                remediation = issue["message"]
-                sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": id ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
-                responsejson["dataSources"][0]["assets"][0]["webAppVulnerabilityFindings"].append(sastfinding)
+                # Loop through each standard
+                for standard in rule_details["securityStandards"]:
+                    # Check if the standard starts with "cwe:"
+                    if standard.startswith("cwe:"):
+                        # Build up the response
+                        commitHash = issue["hash"]
+                        filename = issue["component"].split(":", 1)[1]
+                        linenumbers = str(issue["textRange"]["startLine"]) + "-" + str(issue["textRange"]["endLine"])
+                        id = issue["key"]
+                        name = "CWE-" + standard.replace("cwe:", "")
+                        severity = convert_severity(rule_details["severity"])
+                        detailedName = rule_details["name"]
+                        externalFindingLink = sonarqube_url+"/project/issues?id="+project_key+"&open="+id
+                        source = "SonarQube"
+                        remediation = issue["message"]
+                        sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": id ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
+                        responsejson["dataSources"][0]["assets"][0]["webAppVulnerabilityFindings"].append(sastfinding)
             else:
                 print(f"Failed to fetch rule details for {rule_key}")
     else:
