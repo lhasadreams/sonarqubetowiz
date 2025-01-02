@@ -94,6 +94,7 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
             print(f"Found {len(issues)} vulnerabilities.")
 
         # Iterate over the SonarQube Issues, find the CWE's and add them the Wiz Response
+        cwe_count = 0
         for issue in issues:
             rule_key = issue["rule"]
             params2 = {
@@ -104,19 +105,19 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
             rule_response = requests.get(rules_url, auth=auth, params=params2)
             if rule_response.status_code == 200:
                 rule_details = rule_response.json()["rule"]
+                # print(json.dumps(rule_details, indent=2))
                 # There may ne more than one CWE per SonarQube issue, we need to iterate over them
-                # cwe_standards = []
-
-                # Loop through each standard
                 for standard in rule_details["securityStandards"]:
                     # Check if the standard starts with "cwe:"
                     if standard.startswith("cwe:"):
+                        cwe_count += 1
                         # Build up the response
                         commitHash = issue["hash"]
                         filename = issue["component"].split(":", 1)[1]
                         linenumbers = str(issue["textRange"]["startLine"]) + "-" + str(issue["textRange"]["endLine"])
-                        id = issue["key"]
                         name = "CWE-" + standard.replace("cwe:", "")
+                        id = issue["key"] + name
+                        # print(name)
                         severity = convert_severity(rule_details["severity"])
                         detailedName = rule_details["name"]
                         externalFindingLink = sonarqube_url+"/project/issues?id="+project_key+"&open="+id
@@ -124,11 +125,13 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
                         remediation = issue["message"]
                         sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": id ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
                         responsejson["dataSources"][0]["assets"][0]["webAppVulnerabilityFindings"].append(sastfinding)
+                
             else:
                 print(f"Failed to fetch rule details for {rule_key}")
     else:
         print(f"Error: {sonarquberesponse.status_code} - {sonarquberesponse.text}")
     
+    print(f"Found {str(cwe_count)} CWE's")
     return responsejson, "true"
 
 # Write the wiz.json file to disk
