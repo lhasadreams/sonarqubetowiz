@@ -31,6 +31,7 @@ Typical Output:
 ```
 lhasadreams_vulnerable-code-examples
 Found 35 vulnerabilities.
+Found 51 CWE's
 Upload URL - https://file-upload...
 Upload file succeeded
 
@@ -46,8 +47,8 @@ Upload file succeeded
           "handled": 1
         },
         "findings": {
-          "incoming": 35,
-          "handled": 35
+          "incoming": 51,
+          "handled": 51
         },
         "events": {
           "incoming": 0,
