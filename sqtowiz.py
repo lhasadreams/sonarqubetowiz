@@ -41,7 +41,7 @@ def get_project_keys(sonarqube_url, auth_key, organization):
     return project_keys
 
 # Convert the SonarQube input into a file to uplaod to Wiz
-def convert(sonarqube_url, auth_key, project_key, integrationId):
+def convert(sonarqube_url, auth_key, project_key, integrationId, branch):
     auth = (auth_key, "")
 
     # Fetch Issues with CWE References
@@ -82,7 +82,7 @@ def convert(sonarqube_url, auth_key, project_key, integrationId):
 
         # Add the assest and webAppVulnerabilityFindings Array to the Wiz Response
         project, repo = project_key.split("_", 1)
-        newasset = {"assetIdentifier": {"cloudPlatform": "GitHub", "providerId":"github.com##"+project+"/"+repo+"##main"},"webAppVulnerabilityFindings": []}
+        newasset = {"assetIdentifier": {"cloudPlatform": "GitHub", "providerId":"github.com##"+project+"/"+repo+"##"+branch},"webAppVulnerabilityFindings": []}
         responsejson["dataSources"][0]["assets"].append(newasset)
 
         # Read the SonarQube Issues
@@ -293,6 +293,32 @@ def checkActivity (token, systemActivityId, wiz_api_url):
     response = response.json()
     return response
 
+def getBranch(sonarqube_url, auth_key, project_key ):
+    auth = (auth_key, "")
+
+    # Fetch Branch data
+    branches_url = f"{sonarqube_url}/api/project_branches/list"
+
+    params = {
+        "project": project_key
+    }
+
+    response = requests.get(branches_url, auth=auth, params=params)
+    if response.status_code != 200:
+            print(f"Error: Unable to fetch branch information. Status code: {response.status_code}")
+            print(response.json())
+            return []   
+    else:
+        data = response.json()
+        branches = data.get("branches", [])
+        main_branch = None
+        for branch in branches:
+            if branch.get("isMain") == True:
+                main_branch = branch
+                break
+        if main_branch:
+            return branch["name"]
+
 def main():
     # Read the arguments
     config_file = getargs()
@@ -311,8 +337,11 @@ def main():
     print("SonarQube Project Keys:")
     for key in project_keys:
         print(key)
+        # We are only goign to bring in main branches for now as that is what the Wiz Code VCS Connector scans
+        branch = getBranch(sonarqube["sonarqube_url"], sonarqube["auth_key"], key)
+
         # Read and convert SonarQube CWE's into Wiz Import format
-        responsejson, issues = convert(sonarqube["sonarqube_url"], sonarqube["auth_key"], key, wiz["integrationId"])
+        responsejson, issues = convert(sonarqube["sonarqube_url"], sonarqube["auth_key"], key, wiz["integrationId"], branch)
         writejsonfile(responsejson, key)
     
         # Get an upload URL from Wiz
