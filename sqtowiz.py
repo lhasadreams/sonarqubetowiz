@@ -116,14 +116,15 @@ def convert(sonarqube_url, auth_key, project_key, integrationId, branch):
                         filename = issue["component"].split(":", 1)[1]
                         linenumbers = str(issue["textRange"]["startLine"]) + "-" + str(issue["textRange"]["endLine"])
                         name = "CWE-" + standard.replace("cwe:", "")
-                        id = issue["key"] + name
+                        id = issue["key"]
+                        uniqueid = issue["key"] + name
                         # print(name)
                         severity = convert_severity(rule_details["severity"])
                         detailedName = rule_details["name"]
                         externalFindingLink = sonarqube_url+"/project/issues?id="+project_key+"&open="+id
                         source = "SonarQube"
                         remediation = issue["message"]
-                        sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": id ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
+                        sastfinding = {"sastFinding":{"commitHash":commitHash,"filename":"/"+filename,"lineNumbers":linenumbers},"id": uniqueid ,"name": name,"detailedName": detailedName,"severity": severity,"externalFindingLink": externalFindingLink,"source": source,"remediation": remediation}
                         responsejson["dataSources"][0]["assets"][0]["webAppVulnerabilityFindings"].append(sastfinding)
                 
             else:
@@ -359,5 +360,6 @@ def main():
             # Check the upload response
             response = checkActivity (token, SYSTEM_ACTIVITY_ID, wiz["wiz_api_url"])
             print(json.dumps(response, indent=2))
+
 if __name__ == '__main__':
     main()
